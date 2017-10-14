@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 pip3 install --upgrade awscli boto3
 adduser -S $RUN_USER
