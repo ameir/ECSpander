@@ -13,7 +13,7 @@ More documention is to come soon, but getting this setup is fairly straightforwa
 |---|---|---|
 |`AWS_REGION`|AWS region where ECS cluster resides|`us-east-1`|
 |`ECS_CLUSTER_NAME`|Name of ECS cluster to poll|`default`|
-|`RESOURCE_CHECK_INTERVAL`|How often to poll ECS cluster|`60`|
+|`RESOURCE_CHECK_INTERVAL`|How often to poll ECS cluster (in seconds)|`60`|
 
 ## Sample CloudFormation template
 
