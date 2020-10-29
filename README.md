@@ -18,98 +18,69 @@ More documention is to come soon, but getting this setup is fairly straightforwa
 ## Sample CloudFormation template
 
 ```
-        "EcsClusterEcspanderIamRole": {
-            "Type": "AWS::IAM::Role",
-            "Properties": {
-                "AssumeRolePolicyDocument": {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": {
-                                "Service": [
-                                    "ecs-tasks.amazonaws.com"
-                                ]
-                            },
-                            "Action": [
-                                "sts:AssumeRole"
-                            ]
-                        }
-                    ]
-                },
-                "Policies": [
-                    {
-                        "PolicyName": "ClusterInstancePolicy",
-                        "PolicyDocument": {
-                            "Version": "2012-10-17",
-                            "Statement": [
-                                {
-                                    "Effect": "Allow",
-                                    "Action": [
-                                        "ec2:List*",
-                                        "ec2:Describe*",
-                                        "ecs:List*",
-                                        "ecs:Describe*",
-                                        "ecs:StartTask",
-                                        "autoscaling:List*",
-                                        "autoscaling:Describe*",
-                                        "autoscaling:Update*"
-                                    ],
-                                    "Resource": "*"
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
-        "EcsTaskDefinitionEcspanderEcsClusterProduction": {
-            "Type": "AWS::ECS::TaskDefinition",
-            "Properties": {
-                "TaskRoleArn": {
-                    "Ref": "EcsClusterEcspanderIamRole"
-                },
-                "ContainerDefinitions": [
-                    {
-                        "Name": "ecspander-ecs-cluster-production",
-                        "Image": "ameir/ecspander:latest",
-                        "Cpu": "64",
-                        "Memory": "128",
-                        "Environment": [
-                            {
-                                "Name": "ECS_CLUSTER_NAME",
-                                "Value": {
-                                    "Ref": "EcsClusterProductionEcsCluster"
-                                }
-                            }
-                        ],
-                        "Essential": "true",
-                        "LogConfiguration": {
-                            "LogDriver": "awslogs",
-                            "Options": {
-                                "awslogs-group": {
-                                    "Ref": "EcsClusterProductionCloudwatchLogGroup"
-                                },
-                                "awslogs-region": "us-east-1",
-                                "awslogs-stream-prefix": "ecspander"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
-        "EcspanderEcsServiceEcsClusterProduction": {
-            "Type": "AWS::ECS::Service",
-            "Properties": {
-                "Cluster": {
-                    "Ref": "EcsClusterProductionEcsCluster"
-                },
-                "TaskDefinition": {
-                    "Ref": "EcsTaskDefinitionEcspanderEcsClusterProduction"
-                },
-                "DesiredCount": 1
-            }
-        },
+  EcspanderIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ecs-tasks.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: ClusterInstancePolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - ec2:List*
+            - ec2:Describe*
+            - ecs:List*
+            - ecs:Describe*
+            - autoscaling:List*
+            - autoscaling:Describe*
+            Resource: "*"
+          - Effect: Allow
+            Action:
+            - autoscaling:Update*
+            Resource: !Sub arn:aws:autoscaling:${AWS::Region}:${AWS::AccountId}:autoScalingGroup:*:autoScalingGroupName/${AutoScalingGroup}
+
+  EcspanderTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      TaskRoleArn: !Ref EcspanderIamRole
+      ContainerDefinitions:
+      - Name: ecspander-ecs-cluster-production
+        Image: ameir/ecspander:latest
+        Cpu: '64'
+        Memory: '128'
+        Environment:
+        - Name: AWS_REGION
+          Value: !Ref AWS::Region
+        - Name: ECS_CLUSTER_NAME
+          Value: !Ref EcsCluster
+        Essential: true
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-region: !Ref AWS::Region
+            awslogs-group: !Ref LogGroup
+            awslogs-stream-prefix: !Ref AWS::StackName
+
+  EcspanderEcsService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref EcsCluster
+      TaskDefinition: !Ref EcspanderTaskDefinition
+      DesiredCount: 1
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+
 ```
 
 ## Contributions and issues
